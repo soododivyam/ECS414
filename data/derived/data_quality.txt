@@ -1,0 +1,31 @@
+DATA QUALITY SUMMARY
+====================
+Downloaded tickers: 200
+Download window: 2023-11-20 to 2026-11-18
+Minimum required price coverage: 80%
+Dropped tickers (14): VAML.NS (14.6%), ICICIAMC.NS (30.4%), MEESHO.NS (31.4%), GROWW.NS (34.1%), TMCV.NS (34.1%), LENSKART.NS (34.3%), LGEINDIA.NS (36.6%), TATACAP.NS (36.8%), ENRIN.NS (47.4%), VMM.NS (64.2%), SWIGGY.NS (67.3%), WAAREEENER.NS (68.9%), HYUNDAI.NS (69.5%), PREMIERENE.NS (74.1%)
+Dates removed for isolated missing values: 7
+Final stocks: 186
+Final trading dates: 733 (2023-11-29 to 2026-11-18)
+Log-return observations: 732
+Correlation min/median/max: -0.060 / 0.250 / 0.907
+
+Sector counts (NSE Industry):
+  Financial Services: 45
+  Capital Goods: 20
+  Healthcare: 15
+  Fast Moving Consumer Goods: 14
+  Automobile and Auto Components: 13
+  Metals & Mining: 11
+  Information Technology: 10
+  Power: 9
+  Oil Gas & Consumable Fuels: 9
+  Consumer Services: 8
+  Consumer Durables: 7
+  Realty: 6
+  Chemicals: 5
+  Services: 4
+  Telecommunication: 4
+  Construction Materials: 3
+  Construction: 2
+  Textiles: 1

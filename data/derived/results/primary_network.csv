@@ -1,0 +1,2 @@
+primary_threshold,nodes,edges,density,avg_degree,components,giant_size,giant_fraction,isolates,avg_path_length_giant,diameter_giant
+0.41,186,1831,0.10642255158384191,19.688172043010752,30,150,0.8064516129032258,28,2.9082774049217,9

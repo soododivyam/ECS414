@@ -1,0 +1,2 @@
+primary_threshold,average_clustering,random_graph_clustering,same_sector_edges,total_edges,observed_same_sector_fraction,baseline_same_sector_fraction,homophily_ratio,sector_modularity,n_sectors
+0.41,0.5704484937414622,0.10550397145028449,503,1831,0.2747132714363736,0.0997384481255449,2.754336733719585,0.12219539032995969,18
