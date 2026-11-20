@@ -1,0 +1,411 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage[font=small,labelfont=bf]{caption}
+
+\usepackage{xcolor}
+\usepackage{listings}
+
+\definecolor{codebg}{HTML}{F7F7F7}
+\definecolor{codecomment}{HTML}{6A737D}
+\definecolor{codekeyword}{HTML}{005CC5}
+\definecolor{codestring}{HTML}{032F62}
+
+\lstdefinestyle{python}{
+  language=Python,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekeyword}\bfseries,
+  commentstyle=\color{codecomment}\itshape,
+  stringstyle=\color{codestring},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=8pt,
+  frame=single,
+  rulecolor=\color{gray!40},
+  breaklines=true,
+  breakatwhitespace=false,
+  postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}\space},
+  showstringspaces=false,
+  keepspaces=true,
+  columns=fullflexible,
+  tabsize=4,
+  upquote=true,
+  captionpos=b,
+}
+
+\usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{subcaption}
+\usepackage{float}
+
+\graphicspath{{figures/}}
+
+\title{Topological \& Structural Analysis of the Indian Stock Market}
+\author{ECS414 -- Network Science Theory and Applications}
+\date{November 2026}
+
+
+\begin{document}
+
+
+
+% ---------------------------------------------------------------- title page
+\begin{titlepage}
+\begin{tikzpicture}[remember picture,overlay]
+\draw[line width=0.5pt]
+    ($(current page.north west)+(2.2cm,-2.2cm)$)
+    rectangle
+    ($(current page.south east)+(-2.2cm,2.2cm)$);
+\end{tikzpicture}
+\centering
+\vspace*{3.5cm}
+{\Large ECS414 -- Network Science Theory and Applications}\\[1.0cm]
+{\Huge\bfseries Topological \& Structural Analysis\par}
+{\Huge\bfseries of the Indian Stock Market}\\[2.1cm]
+{\LARGE\bfseries Assignment}\\[2.5cm]
+{\large by}\\[2.4cm]
+{\large Divyam Sood}\\[0.4cm]
+{\large Roll No: 23112}\\[4.4cm]
+{\large 19 November 2026}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ---------------------------------------------------------------- introduction
+\section{Introduction}
+\label{sec:intro}
+Financial markets are archetypal complex systems: thousands of interacting
+assets generate collective behaviour that cannot be understood from individual
+stocks alone. A useful abstraction is to treat stocks as nodes and strong
+statistical dependencies between their returns as edges. The resulting
+\emph{correlation network} makes concepts such as hubs, bridges, communities
+and robustness directly measurable with network science.
+
+The objective of this assignment is to construct, visualise, and analyse a complex network of stocks from the Indian National Stock Exchange (NSE) using historical price data. Students will investigate how market dynamics, sector
+correlations, and structural hubs emerge from time-series data using foundational concepts in network
+science.
+
+\section{Methodology}
+\label{sec:methods}
+
+\subsection{Data source and preprocessing}
+The constituent list \texttt{ind\_nifty200list.csv} supplies 200 symbols and
+their NSE \texttt{Industry} labels. Daily prices for the period 20~November~2023 to
+18~November~2026 (three years, 740 trading dates) were downloaded in one
+\texttt{yfinance} request with \texttt{auto\_adjust=True}, so the
+\texttt{Close} series is dividend/split-adjusted. All downloaded prices are cached in
+\texttt{data/prices\_raw.csv}, so no later step repeats a network request as suggested in the assignment.
+
+% Optional: raw yfinance download and local cache
+% \input{code/02_data_download}
+
+For stock $i$ on day $t$, the logarithmic return is
+\begin{equation}
+  r_{i,t}=\ln\!\left(\frac{P_{i,t}}{P_{i,t-1}}\right)
+  \label{eq:returns}
+\end{equation}
+Stocks with price coverage below $80\%$ of the
+trading dates were discarded. Seven dates were also dropped: 20--24 and
+28~November~2023, and 15~January~2026. This yields 186 stocks and 732 daily
+return observations.
+
+\input{code/03_preprocess}
+
+\subsection{Correlation and network construction}
+For every pair of stocks we compute the Pearson correlation of their return
+series,
+\begin{equation}
+  \rho_{ij}=\frac{\sum_t (r_{i,t}-\bar r_i)(r_{j,t}-\bar r_j)}
+                 {\sqrt{\sum_t (r_{i,t}-\bar r_i)^2}\,
+                  \sqrt{\sum_t (r_{j,t}-\bar r_j)^2}}.
+  \label{eq:pearson}
+\end{equation}
+The unweighted adjacency matrix is
+\begin{equation}
+  A_{ij}=\begin{cases}
+    1 & \rho_{ij}\ge r,\; i\ne j,\\
+    0 & \text{otherwise},
+  \end{cases}
+  \label{eq:adjacency}
+\end{equation}
+so an edge means ``these two stocks moved together more strongly than the
+chosen threshold $r$''. The graph is simple and undirected, and the underlying
+$\rho_{ij}$ is retained as an edge attribute. Every node carries its company
+name and NSE industry sector.
+
+\input{code/05_build_network}
+
+The primary threshold was selected by scanning $r\in[0.30,0.75]$ in steps of
+$0.01$ and taking the \emph{highest} threshold for which the largest connected
+component still contains at least $80\%$ of the stocks and the average degree
+is at least 4. This rule avoids both a near-complete graph (where every metric
+is trivial) and a fragmented graph (where centralities are meaningless).
+The selected value is $r=0.41$. Table~\ref{tab:sensitivity} summarises the sensitivity of network metrics to the correlation threshold.
+
+\input{code/04_threshold_selection}
+
+\subsection{Network metrics}
+For node $i$ with degree $k_i$ in a network of $N$ nodes:
+\begin{align}
+  C_{\text{Degree}}(i) &= \frac{k_i}{N-1}, \label{eq:deg}\\
+  C_{\text{Betweenness}}(i) &=
+  \frac{2}{(N-1)(N-2)}
+  \sum_{\substack{s<t\\s,t\neq i}}
+  \frac{\sigma_{st}(i)}{\sigma_{st}}, \label{eq:bet}\\
+  x_i &= \frac{1}{\lambda}\sum_j A_{ij}x_j. \label{eq:eig}
+\end{align}
+Degree centrality counts direct co-movement partners, betweenness centrality
+counts the fraction of shortest paths passing through a stock, and eigenvector
+centrality rewards connections to other influential stocks. Because the graph
+has several components, eigenvector centrality is computed on the giant
+component and set to zero for nodes outside it.
+
+The local clustering coefficient and the average clustering coefficient are
+\begin{equation}
+  C_i=\frac{2e_i}{k_i(k_i-1)},\qquad
+  \bar C=\frac{1}{N}\sum_i C_i,
+  \label{eq:clustering}
+\end{equation}
+where $e_i$ is the number of edges among the neighbours of $i$. Sector
+homophily is measured as the observed fraction of edges whose endpoints share
+a sector, divided by the baseline fraction
+$\sum_s n_s(n_s-1)/[N(N-1)]$ expected for random edges among the same sector
+sizes. We also report modularity of the sector partition. For the sensitivity
+study, each threshold is used to rebuild the graph and we record the edge
+count, the average shortest path length of the largest component, and the
+giant-component fraction.
+
+\subsection{Code}
+The complete code has been uploaded to my \href{https://github.com/soododivyam/ECS414}{GitHub}. Each step uses a small set of standard libraries:
+
+
+\begin{itemize}
+  \item \textbf{Data acquisition:} \texttt{yfinance} downloads three years of daily adjusted close prices; the timezone/cookie cache is redirected inside the project and the prices are cached.
+  \item \textbf{Data preparation:} \texttt{pandas} and \texttt{numpy} align the series, filter by coverage, compute log returns and build the Pearson correlation matrix.
+  \item \textbf{Network construction and analysis:} \texttt{networkx} thresholds the correlations into a simple graph and computes degrees, centralities, clustering, components, shortest paths and the spring-layout visualisation.
+  \item \textbf{Plots:} \texttt{matplotlib} (with a \texttt{seaborn} style) produces the histograms, log-log fits, centrality bars, sector-coloured network and sensitivity panels; \texttt{scipy.stats} supplies the least-squares fits.
+  \item \textbf{Tables:} \texttt{pandas.to\_latex} writes \texttt{booktabs} tables directly from the result CSVs.
+\end{itemize}
+
+% Optional: all experiment parameters
+% \input{code/01_config}
+
+% Optional: CSV -> booktabs table export
+% \input{code/11_latex_tables}
+
+The code for calculating the different network metrics, using standard methods from networkx is:
+
+\input{code/07_centrality}
+
+% Optional: compact five-line overview of the same metric calls
+% \input{code/12_network_metrics}
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Data quality and the primary network}
+Fourteen recent listings (for
+example \texttt{GROWW.NS}, \texttt{MEESHO.NS}, \texttt{TATACAP.NS}) had less
+than $80\%$ of the three-year history and were excluded; seven further dates
+were dropped (Section~\ref{sec:methods}). The final network has 186 nodes and 1831
+edges at $r=0.41$ (Table~\ref{tab:network-summary}). Its giant component
+contains 150 stocks ($80.6\%$), while 28 stocks are isolated. Within the giant
+component the average shortest path is 2.91 edges and the diameter is 9. Throughout this report, the terms \emph{sector} and \emph{industry} are used
+interchangeably and both refer to the \texttt{Industry} column of the
+constituent CSV.
+
+\input{tables/network_summary.tex}
+
+\subsection{Degree distribution}
+Figure~\ref{fig:degree} shows a broad, right-skewed degree distribution: the
+linear-scale panel (Figure~\ref{fig:degree-linear}) gives the raw histogram,
+while the log--log panel (Figure~\ref{fig:degree-loglog}) shows the tail fit.
+The mean degree is 19.7, the median is only 9 and the maximum is 80
+(Table~\ref{tab:degree}). On log--log axes the tail has slope $-0.56$ with
+$R^2=0.33$; the fit over all points gives slope $-0.55$ with $R^2=0.60$. The degree distribution is strongly right-skewed, with substantial heterogeneity in the number of connections across stocks. Although several stocks have considerably higher degrees than the median, the available log-log fit does not provide convincing evidence of a power-law distribution.
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/degree_linear.png}
+\caption{Linear scale.}
+\label{fig:degree-linear}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/degree_loglog.png}
+\caption{Log--log scale, with least-squares fits over all points and over the tail.}
+\label{fig:degree-loglog}
+\end{subfigure}
+\caption{Degree distribution of the Nifty 200 correlation network.}
+\label{fig:degree}
+\end{figure}
+
+\input{tables/degree_stats.tex}
+
+\input{code/06_degree_distribution}
+
+\subsection{Top-10 stocks according to centrality}
+The three leaderboards are given in Tables~\ref{tab:top10-degree}--%
+\ref{tab:top10-eigenvector}.
+Degree and eigenvector centralities largely agree (Spearman
+$\rho=0.94$, Table~\ref{tab:centrality-corr}). Degree is led by
+\texttt{DLF.NS}, \texttt{RECLTD.NS}, \texttt{AMBUJACEM.NS},
+\texttt{IRCTC.NS} and \texttt{TATAPOWER.NS}; the eigenvector leaderboard
+contains the same names plus \texttt{CANBK.NS} in third place (with
+\texttt{TATAPOWER.NS} sixth). Betweenness varies:
+\texttt{INDHOTEL.NS}, \texttt{ETERNAL.NS}, \texttt{BIOCON.NS},
+\texttt{NAUKRI.NS} and \texttt{LAURUSLABS.NS} act as bridges.
+
+To quantify this agreement we use Spearman's rank correlation coefficient.
+Instead of correlating the raw scores, Spearman correlates the \emph{ranks} of
+the stocks, so it measures how monotonic the relationship is on a scale from
+$-1$ to $+1$. This is appropriate here because the three centralities have very
+different numerical ranges and skewed distributions --- for example, many
+stocks outside the giant component have exactly zero eigenvector centrality ---
+so a Pearson correlation would be dominated by a few large values. Spearman
+instead answers the economically meaningful question of whether a stock that
+ranks highly on one centrality also ranks highly on another. The value of
+$0.94$ therefore confirms that degree and eigenvector centrality identify
+essentially the same prominent stocks, while the much lower correlations
+involving betweenness show that bridges form a distinct structural group.
+
+\input{tables/top10_degree.tex}
+\input{tables/top10_betweenness.tex}
+\input{tables/top10_eigenvector.tex}
+\input{tables/centrality_correlations.tex}
+\input{tables/clustering_by_sector}
+
+\subsection{Local clustering and sector homophily}
+The average clustering coefficient is $0.570$, more than five times the value
+$0.106$ for an Erd\H{o}s--R\'enyi graph with the same size and density. Of the 1831
+edges, 503 ($27.5\%$) join stocks in the same NSE industry, versus a baseline
+of $10.0\%$: a homophily ratio of $2.75$, with modularity $0.122$. Sectors with
+the tightest triangles are Information Technology (mean local clustering
+$0.901$), Oil \& Gas ($0.828$) and Power ($0.806$); Healthcare ($0.248$) and
+Consumer Services ($0.238$) are much looser
+(Table~\ref{tab:clustering-sector}). Means for sectors with fewer than five
+stocks are based on very few observations; Textiles, with a single stock, is
+zero by construction. The distribution of local clustering is
+shown in Figure~\ref{fig:clustering}; Figure~\ref{fig:network} shows a
+sector-level aggregation and the giant component. At the sector level,
+Financial Services is the dominant hub, whereas IT is almost self-contained:
+40 of its 43 edges stay inside the sector.
+
+\input{code/08_clustering_homophily}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/network_sectors.png}
+\caption{Primary correlation network at $r=0.41$. (a)~Sector-level
+aggregation: nodes are NSE industries, sized by the number of stocks, and
+edges are weighted by the number of cross-sector correlations. (b)~Giant
+component (150 stocks): the 60 highest-degree stocks are coloured (node size
+increasing with degree) and the ten largest hubs are labelled; the remaining
+stocks are small grey dots. Isolated stocks are omitted.}
+\label{fig:network}
+\end{figure}
+
+% Optional: spring-layout drawing code for this figure
+% \input{code/10_network_layout}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{figures/clustering_distribution.png}
+\caption{Distribution of local clustering coefficients.}
+\label{fig:clustering}
+\end{figure}
+
+
+
+\subsection{Threshold sensitivity}
+Figure~\ref{fig:sensitivity} and Table~\ref{tab:sensitivity} show the ``what-if''
+study. Raising $r$ from 0.30 to 0.75 reduces the number of edges from 5684 to
+12 and the giant component from $98.9\%$ to $1.6\%$ of the stocks. The average
+path length on the giant component first \emph{increases} (1.86 at $r=0.30$ to
+2.79 at $r=0.40$) as the graph becomes sparser, then becomes erratic once the
+giant component fragments (2.12 at 0.45, 3.12 at 0.55). The decisive
+connectivity loss occurs between $r=0.40$ and $r=0.50$, where the giant
+component falls from $82.8\%$ to $45.7\%$ of the network.
+
+\input{code/09_threshold_sensitivity}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=\textwidth]{figures/threshold_sensitivity.png}
+\caption{Edge count, average shortest path length on the giant component,
+giant-component fraction and number of isolated nodes as the correlation
+threshold varies. The dashed line marks the primary threshold $r=0.41$.}
+\label{fig:sensitivity}
+\end{figure}
+
+\input{tables/threshold_sensitivity.tex}
+
+\section{Interpretation and discussion}
+\label{sec:discussion}
+
+\paragraph{Hubs versus index heavyweights.}
+The network's most connected stocks are not the familiar Nifty heavyweights.
+At $r=0.41$, Reliance ranks 69th in degree, TCS 102nd and HDFC Bank 82nd;
+TCS and Infosys have eigenvector scores of only $1.5\times10^{-7}$ and
+$1.1\times10^{-6}$ respectively: effectively zero, but not because they lie
+outside the giant component --- both are members of it. Their co-movement
+partners are mostly other information-technology stocks with similarly tiny
+eigenvector scores, so eigenvector centrality assigns them almost no weight.
+This does not mean these companies are unimportant: their returns are dominated
+by idiosyncratic or index-level moves rather than strong
+pairwise co-movement with many other constituents. Instead, the hubs are
+real-estate, public-sector finance, infrastructure and power stocks
+(\texttt{DLF}, \texttt{REC}, \texttt{PFC}, \texttt{CANBK}, \texttt{TATAPOWER}). One possible explanation is that these companies share exposure to common macroeconomic factors, including interest-rate expectations, credit conditions and infrastructure-related policy developments.
+
+\paragraph{Bridges.}
+Betweenness centrality highlights a different set: Indian Hotels, Eternal
+(Zomato), Biocon, Info Edge and Laurus Labs. These consumer-services and
+healthcare names bridge otherwise separate sector blocks; financial-services
+bridges (L\&T Finance, REC and Aditya Birla Capital) appear just below them in
+ranks 6--10. They do not score as highly on degree and eigenvector
+centrality, illustrating why the three measures capture different
+structural roles.
+
+\paragraph{Sector homophily and triangles.}
+High clustering well above the random-graph baseline and a homophily ratio of
+$2.75$ confirm that correlation triangles form within industries. IT, oil/gas
+and power stocks share strong common factors (global technology cycles, crude
+prices, regulated tariffs), producing tight cliques. Healthcare and consumer
+services are more heterogeneous, so their stocks bridge sectors rather than
+forming cliques. The moderate modularity ($0.122$) indicates sector structure
+is visible but far from a clean partition --- many cross-sector links remain,
+as expected in an integrated market.
+
+\paragraph{Robustness.}
+The sharp transition around $r=0.40$--$0.50$ is the percolation-like behaviour
+expected from thresholding a dense correlation matrix: connectivity is robust
+to modest tightening but collapses quickly beyond a critical threshold.
+
+\section{Conclusion}
+\label{sec:conclusion}
+This assignment was a wonderful exercise to implement the concepts learned during class to a real-world dataset. The idea of modelling the stock market as a graph with edges defined this way was nice.
+
+We built a 186-node, 1831-edge network of Nifty~200 stocks from three years of
+daily log returns and a correlation threshold of $0.41$. The degree
+distribution is right-skewed with a weak heavy tail but is not cleanly
+scale-free. Degree and eigenvector centrality identify public-sector finance,
+real-estate and infrastructure hubs, while betweenness identifies consumer and
+healthcare bridges.
+Clustering is more than five times the random baseline and same-sector edges
+are $2.75$ times more common than chance, confirming sector homophily. The
+connectivity sweep shows a rapid loss of the giant component between $r=0.40$
+and $r=0.50$. Overall, simple correlation thresholding already reveals
+economically meaningful structure: centrality, clustering and sector
+homophily point to the same set of hubs and bridges.
+
+\end{document}
+

@@ -1,0 +1,29 @@
+% ---------------------------------------------------------------------------
+% Code snippet: coverage filter, log returns and Pearson correlation
+% Source file: src/01_preprocess.py
+% Suggested placement: Section 2.1-2.2 (equations 1 and 2).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+# Drop stocks with less than 80% price coverage, then isolated-gap dates
+coverage = prices.notna().mean()
+dropped = sorted(
+    [(ticker, float(coverage[ticker])) for ticker in prices.columns
+     if coverage[ticker] < config.MIN_COVERAGE],
+    key=lambda x: x[1],
+)
+prices = prices.drop(columns=[t for t, _ in dropped])
+prices = prices.dropna(axis=0, how="any")
+
+# Log returns, eq. (1)
+returns = np.log(prices).diff().dropna(how="any")
+
+# Pearson correlation matrix, eq. (2)
+min_periods = int(config.MIN_COVERAGE * len(returns))
+corr = returns.corr(method="pearson", min_periods=min_periods)
+
+# Sanity checks: symmetric, unit diagonal, no missing pairs
+assert np.allclose(corr.to_numpy(), corr.to_numpy().T, equal_nan=True)
+assert np.allclose(np.diag(corr.to_numpy()), 1.0)
+assert corr.notna().all().all()
+\end{lstlisting}

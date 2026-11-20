@@ -1,0 +1,28 @@
+% ---------------------------------------------------------------------------
+% Code snippet: force-directed sector-coloured network visualisation
+% Source file: src/03_analyses.py
+% Suggested placement: Figure 5 (sector-coloured network) or Section 2.4.
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+# Force-directed layout: fixed seed keeps the figure reproducible
+pos = nx.spring_layout(graph, seed=config.RANDOM_SEED,
+                       k=0.12, iterations=120)
+
+colour_map = mpl.colormaps["tab20"]
+colours = {s: colour_map(i / max(len(sector_list) - 1, 1))
+           for i, s in enumerate(sector_list)}
+node_sizes = {n: 12 + 2.0 * degree for n, degree in graph.degree()}
+
+nx.draw_networkx_edges(graph, pos, alpha=0.12, width=0.4,
+                       edge_color="#666666")
+for sector in sector_list:
+    nodes = [n for n in graph.nodes()
+             if graph.nodes[n]["sector"] == sector]
+    nx.draw_networkx_nodes(
+        graph, pos, nodelist=nodes,
+        node_size=[node_sizes[n] for n in nodes],
+        node_color=[colours[sector]], label=sector,
+        edgecolors="white", linewidths=0.3,
+    )
+\end{lstlisting}

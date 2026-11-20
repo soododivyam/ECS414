@@ -1,0 +1,38 @@
+% ---------------------------------------------------------------------------
+% Code snippet: adjacency matrix and graph construction with node metadata
+% Source files: src/network_utils.py, src/02_build_network.py
+% Suggested placement: Section 2.2 (equation 3 and graph attributes).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+def adjacency(corr: np.ndarray, threshold: float) -> np.ndarray:
+    """Unweighted adjacency: 1 where corr >= threshold, zero diagonal."""
+    a = (corr >= threshold).astype(np.int8)      # eq. (3)
+    np.fill_diagonal(a, 0)
+    return a
+
+def build_graph(corr, threshold, constituents) -> nx.Graph:
+    tickers = list(corr.columns)
+    values = corr.to_numpy()
+    a = adjacency(values, threshold)
+    graph = nx.Graph()
+    graph.add_nodes_from(tickers)
+    for i, u in enumerate(tickers):
+        for j in range(i + 1, len(tickers)):
+            if a[i, j]:
+                graph.add_edge(u, tickers[j],
+                               correlation=float(values[i, j]))
+    # Every node carries a company name and its NSE industry
+    meta = constituents.set_index(
+        constituents["Symbol"].astype(str) + ".NS")
+    for ticker in tickers:
+        row = meta.loc[ticker]
+        graph.nodes[ticker]["company"] = str(row["Company Name"])
+        graph.nodes[ticker]["sector"] = str(row["Industry"])
+    return graph
+
+
+# The graph must stay simple: no self-loops, edge count matches adjacency
+assert not any(graph.has_edge(u, u) for u in graph.nodes)
+assert graph.number_of_edges() == int(a.sum() // 2)
+\end{lstlisting}

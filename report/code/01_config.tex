@@ -1,0 +1,25 @@
+% ---------------------------------------------------------------------------
+% Code snippet: experiment configuration
+% Source file: config.py
+% Suggested placement: Section 2 (Methodology), reproducibility paragraph.
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+# config.py -- single source of truth for every pipeline step
+PERIOD = "3y"                  # download window
+INTERVAL = "1d"
+
+MIN_COVERAGE = 0.80            # keep a stock with >= 80% of dates
+
+# Primary network: highest threshold that keeps a connected giant component
+THRESHOLD_GRID = [round(0.30 + 0.01 * i, 2) for i in range(46)]
+MIN_AVG_DEGREE = 4.0
+MIN_GIANT_FRACTION = 0.80
+
+# Threshold sensitivity sweep
+SWEEP_THRESHOLDS = [0.30, 0.35, 0.40, 0.45, 0.50,
+                    0.55, 0.60, 0.65, 0.70, 0.75]
+
+RANDOM_SEED = 42               # layouts and Erdos-Renyi baseline
+FIGURE_DPI = 160
+\end{lstlisting}

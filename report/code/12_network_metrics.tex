@@ -1,0 +1,12 @@
+% ---------------------------------------------------------------------------
+% Code snippet: concise NetworkX calls for the reported metrics
+% Source: previously inline in report/main.tex (Section 2.4)
+% Suggested placement: Section 2.4 (Code).
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+deg = nx.degree_centrality(G)
+bet = nx.betweenness_centrality(G, normalized=True, seed=42)
+eig = nx.eigenvector_centrality_numpy(G.subgraph(giant))
+C = nx.average_clustering(G)                  # clustering
+L = nx.average_shortest_path_length(giant)    # path length
+\end{lstlisting}

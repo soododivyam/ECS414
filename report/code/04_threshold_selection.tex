@@ -1,0 +1,37 @@
+% ---------------------------------------------------------------------------
+% Code snippet: network summary helper and primary-threshold selection
+% Source files: src/network_utils.py, src/02_build_network.py
+% Suggested placement: Section 2.2 (Correlation and network construction).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+def graph_metrics(graph: nx.Graph) -> dict:
+    components = sorted((len(c) for c in nx.connected_components(graph)),
+                        reverse=True)
+    n = graph.number_of_nodes()
+    return {
+        "nodes": n,
+        "edges": graph.number_of_edges(),
+        "density": nx.density(graph),
+        "avg_degree": 2 * graph.number_of_edges() / n if n else 0.0,
+        "components": len(components),
+        "giant_size": components[0] if components else 0,
+        "giant_fraction": components[0] / n if n else 0.0,
+        "isolates": nx.number_of_isolates(graph),
+    }
+
+
+def choose_threshold(corr: np.ndarray) -> tuple[float, list[dict]]:
+    """Most stringent r that still keeps a usable giant component."""
+    scan = [
+        graph_metrics(nx.from_numpy_array(adjacency(corr, r)))
+        for r in config.THRESHOLD_GRID          # 0.30, 0.31, ..., 0.75
+    ]
+    feasible = [
+        (r, m) for r, m in zip(config.THRESHOLD_GRID, scan)
+        if m["avg_degree"] >= config.MIN_AVG_DEGREE
+        and m["giant_fraction"] >= config.MIN_GIANT_FRACTION
+    ]
+    # (the density fallback for an empty feasible set is omitted here)
+    return max(feasible, key=lambda x: x[0])[0], scan
+\end{lstlisting}

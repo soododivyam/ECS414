@@ -1,0 +1,28 @@
+% ---------------------------------------------------------------------------
+% Code snippet: exporting result CSVs as booktabs LaTeX tables
+% Source file: src/04_report_tables.py
+% Suggested placement: Section 2.4 (Code), or an appendix on reproducibility.
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+def write_table(df, filename, caption, label, float_fmt="%.3f"):
+    text = df.to_latex(
+        index=False,
+        escape=True,
+        float_format=float_fmt,
+        caption=caption,
+        label=label,
+        column_format="l" + "l" * (df.shape[1] - 1),
+    )
+    # Try the exact source position first, otherwise the top of a page
+    text = text.replace("\\begin{table}",
+                        "\\begin{table}[!ht]\n\\centering")
+    (TABLES / filename).write_text(text, encoding="utf-8")
+
+
+# Example: the top-10 degree leaderboard
+df = pd.read_csv(RESULTS / "top10_degree.csv").drop(columns=["Ticker"])
+df = df.rename(columns={"Score": "Centrality"})
+write_table(df, "top10_degree.tex",
+            "Top-10 stocks by degree centrality", "tab:top10-degree")
+\end{lstlisting}

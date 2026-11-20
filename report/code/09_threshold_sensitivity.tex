@@ -1,0 +1,25 @@
+% ---------------------------------------------------------------------------
+% Code snippet: threshold sensitivity sweep
+% Source file: src/03_analyses.py
+% Suggested placement: Section 3.5 (Threshold sensitivity).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+values = corr.to_numpy()
+rows = []
+for r in config.SWEEP_THRESHOLDS:              # 0.30 ... 0.75
+    graph = nx.from_numpy_array(adjacency(values, r))
+    metrics = graph_metrics(graph)
+
+    # Average shortest path length on the giant component only
+    largest = max(nx.connected_components(graph), key=len)
+    subgraph = graph.subgraph(largest)
+    path = (nx.average_shortest_path_length(subgraph)
+            if subgraph.number_of_nodes() > 1 else np.nan)
+
+    rows.append({"threshold": r, **metrics,
+                 "avg_path_length_giant": path})
+
+sweep = pd.DataFrame(rows)
+sweep.to_csv(config.RESULTS_DIR / "threshold_sensitivity.csv", index=False)
+\end{lstlisting}

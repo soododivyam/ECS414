@@ -1,0 +1,33 @@
+% ---------------------------------------------------------------------------
+% Code snippet: degree distribution and log-log least-squares fits
+% Source file: src/03_analyses.py
+% Suggested placement: Section 3.2 (Degree distribution).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+degrees = np.array([d for _, d in graph.degree()])
+counts = np.bincount(degrees, minlength=degrees.max() + 1)
+k = np.arange(len(counts))
+
+# Ignore k = 0 (isolates) and empty bins on log axes
+positive = k[(counts > 0) & (k > 0)]
+freq = counts[(counts > 0) & (k > 0)]
+
+# Fit over all points
+slope, intercept, r_value, _, _ = stats.linregress(
+    np.log(positive), np.log(freq))
+
+# Fit over the tail, k >= max(5, median degree)
+tail = positive >= max(5, int(np.median(degrees)))
+tail_slope, tail_intercept, tail_r, _, _ = stats.linregress(
+    np.log(positive[tail]), np.log(freq[tail]))
+
+fig, ax = plt.subplots(figsize=(7, 5))
+ax.scatter(positive, freq, s=42, label="Observed")
+xs = np.logspace(np.log10(positive.min()),
+                 np.log10(positive.max()), 100)
+ax.plot(xs, np.exp(intercept) * xs ** slope, "r--",
+        label=f"All-point fit: slope {slope:.2f}")
+ax.set_xscale("log")
+ax.set_yscale("log")
+\end{lstlisting}

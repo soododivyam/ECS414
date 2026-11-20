@@ -1,0 +1,26 @@
+% ---------------------------------------------------------------------------
+% Code snippet: degree, betweenness and eigenvector centrality
+% Source file: src/03_analyses.py
+% Suggested placement: Section 3.3 (Top-10 stocks according to centrality).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+deg = nx.degree_centrality(graph)
+bet = nx.betweenness_centrality(graph, normalized=True,
+                                seed=config.RANDOM_SEED)
+
+# Eigenvector centrality is well defined only on the giant component,
+# so it is computed there and set to zero for every other node.
+giant = max(nx.connected_components(graph), key=len)
+eig_giant = nx.eigenvector_centrality_numpy(
+    graph.subgraph(giant), max_iter=2000, tol=1e-10)
+eig = {node: eig_giant.get(node, 0.0) for node in graph.nodes()}
+
+# Compare the three rankings with Spearman's rho
+scores = pd.DataFrame({
+    "Degree": pd.Series(deg),
+    "Betweenness": pd.Series(bet),
+    "Eigenvector": pd.Series(eig),
+})
+spearman = scores.corr(method="spearman")
+\end{lstlisting}

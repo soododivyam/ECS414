@@ -1,0 +1,38 @@
+% ---------------------------------------------------------------------------
+% Code snippet: clustering, Erdos-Renyi baseline, sector homophily, modularity
+% Source file: src/03_analyses.py
+% Suggested placement: Section 3.4 (Local clustering and sector homophily).
+% Uses the shared 'python' listings style defined in main.tex.
+% ---------------------------------------------------------------------------
+\begin{lstlisting}[style=python]
+local = nx.clustering(graph)
+avg = nx.average_clustering(graph)
+random_avg = nx.average_clustering(nx.gnp_random_graph(
+    graph.number_of_nodes(), nx.density(graph),
+    seed=config.RANDOM_SEED))
+
+sector = {n: graph.nodes[n]["sector"] for n in graph.nodes()}
+sector_counts = pd.Series(list(sector.values())).value_counts()
+same = sum(1 for u, v in graph.edges() if sector[u] == sector[v])
+
+# Baseline fraction expected for random edges among these sector sizes
+n = graph.number_of_nodes()
+baseline = sum(s * (s - 1) for s in sector_counts) / (n * (n - 1))
+
+# Modularity of the partition induced by NSE industry labels
+communities = [
+    [node for node in graph.nodes()
+     if graph.nodes[node]["sector"] == s]
+    for s in sector_counts.index
+]
+modularity = nx.community.modularity(graph, communities)
+
+summary = {
+    "average_clustering": avg,
+    "random_graph_clustering": random_avg,
+    "observed_same_sector_fraction": same / graph.number_of_edges(),
+    "baseline_same_sector_fraction": baseline,
+    "homophily_ratio": (same / graph.number_of_edges()) / baseline,
+    "sector_modularity": modularity,
+}
+\end{lstlisting}
