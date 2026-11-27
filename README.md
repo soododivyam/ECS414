@@ -6,8 +6,7 @@ Reproducible pipeline for the ECS414/614 Network Science assignment:
 ## Environment
 
 A virtual environment already exists in `assignment/`. It was used for all
-results; `requirements.txt` is a frozen snapshot of its packages. Missing
-extras (`scipy`, `matplotlib`, `seaborn`, `jinja2`) have been installed into it.
+results; `requirements.txt` is a frozen snapshot of its packages.
 
 ```bash
 # from this folder
@@ -46,6 +45,3 @@ To compile locally:
 ```bash
 cd report && pdflatex main.tex
 ```
-
-On Overleaf, upload the whole `report/` folder and set `main.tex` as the main
-document (tables and figures are included with relative paths).
